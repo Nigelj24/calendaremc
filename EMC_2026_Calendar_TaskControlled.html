@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMC Entertainment — 2026 Calendar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F5F5F5;color:#1A1A2E;min-height:100vh;padding:20px}
+#cal-wrap{max-width:1100px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+h1{font-size:20px;font-weight:600;color:#1A1A2E;margin-bottom:4px}
+.sub{font-size:13px;color:#666;margin-bottom:20px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.nav-row{display:flex;align-items:center;gap:8px}
+.nav-btn{background:#F0F0F0;border:1px solid #DDD;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;color:#1A1A2E;transition:background 0.15s}
+.nav-btn:hover{background:#E0E0E0}
+.month-label{font-size:17px;font-weight:600;color:#1A1A2E;min-width:170px;text-align:center}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1.5px solid;cursor:pointer;white-space:nowrap;transition:all 0.15s}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:#FAFAFA;border-radius:8px;border:1px solid #EEE}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#555}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.dow-hdr{text-align:center;font-size:11px;font-weight:600;color:#888;padding:7px 0;letter-spacing:0.05em}
+.day-cell{background:#fff;border:1px solid #E8E8E8;border-radius:8px;min-height:96px;padding:5px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s}
+.day-cell:hover{border-color:#AAA;box-shadow:0 2px 6px rgba(0,0,0,0.07)}
+.day-cell.other-month{opacity:0.3;cursor:default}
+.day-cell.other-month:hover{border-color:#E8E8E8;box-shadow:none}
+.day-cell.today{border:2px solid #378ADD;background:#F0F7FF}
+.day-cell.has-event{background:#FAFAFA}
+.day-num{font-size:11px;font-weight:600;color:#888;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.today-dot{width:20px;height:20px;border-radius:50%;background:#378ADD;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700}
+.task-pill{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.more-badge{font-size:10px;color:#999;padding:1px 4px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.panel{background:#fff;border-radius:16px;width:min(500px,94vw);max-height:88vh;overflow-y:auto;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.panel-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
+.panel-date{font-size:16px;font-weight:600;color:#1A1A2E}
+.panel-sub{font-size:12px;color:#888;margin-top:3px}
+.close-btn{background:#F0F0F0;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;color:#555;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.close-btn:hover{background:#E0E0E0}
+.stats-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.stat-box{background:#F8F8F8;border-radius:8px;padding:10px 14px;flex:1;min-width:80px;border:1px solid #EEE}
+.stat-num{font-size:20px;font-weight:600;color:#1A1A2E}
+.stat-lbl{font-size:11px;color:#888}
+.event-banner{padding:7px 12px;border-radius:8px;margin-bottom:8px;font-size:13px;font-weight:600}
+.task-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #F0F0F0}
+.task-row:last-child{border-bottom:none}
+.task-cat-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:600;color:#1A1A2E}
+.task-meta{font-size:11px;color:#888;margin-top:2px}
+.task-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:4px}
+.empty-msg{font-size:13px;color:#AAA;text-align:center;padding:2.5rem 0}
+@media(max-width:600px){#cal-wrap{padding:14px}.month-label{font-size:14px;min-width:130px}.day-cell{min-height:70px}}
+</style>
+</head>
+<body>
+<div id="cal-wrap">
+  <h1>EMC Entertainment — 2026 Master Calendar</h1>
+  <div class="sub">Click any day to see scheduled tasks &nbsp;·&nbsp; Filter by event using the buttons below</div>
+  <div class="top-bar">
+    <div class="nav-row">
+      <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
+      <span class="month-label" id="month-label"></span>
+      <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+    </div>
+    <div class="filter-row" id="filter-row"></div>
+  </div>
+  <div class="legend" id="legend-row"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanelOutside(event)">
+  <div class="panel" id="panel">
+    <div class="panel-hdr">
+      <div>
+        <div class="panel-date" id="panel-date"></div>
+        <div class="panel-sub" id="panel-sub"></div>
+      </div>
+      <button class="close-btn" onclick="closePanel()">&#215;</button>
+    </div>
+    <div id="panel-body"></div>
+  </div>
+</div>
+
+<script>
+const TODAY=new Date(2026,2,22);
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzccpHQV6ioHrDWMqQc3n8lKYexgkYU7oWQMIh55VS9FbqRGDDwVNXhq2ljJeYBwaGU7Q/exec";
+
+const DEFAULT_EVENTS={
+  "EMC Brunch":   {date:new Date(2026,5,27),color:"#C9A84C",light:"#FFF8E7",emoji:"🥂",teaser:-87,active:true},
+  "Paradise":     {date:new Date(2026,7,29),color:"#1E88E5",light:"#E3F2FD",emoji:"🏝️",teaser:-28,active:true},
+  "Halloween":    {date:new Date(2026,9,31),color:"#E65100",light:"#FFF3E0",emoji:"🎃",teaser:-24,active:true},
+  "Holiday Party":{date:new Date(2026,11,26),color:"#2D6A4F",light:"#E8F5E9",emoji:"🎄",teaser:-21,active:true},
+};
+
+let EVENTS={...DEFAULT_EVENTS};
+let TASK_OVERRIDES=[];
+let ALL_TASKS=[];
+let TASK_MAP={};
+let FILTERS=["All"];
+let FC={"All":{bg:"#F0F0F0",txt:"#333",br:"#CCC"}};
+
+const CAT={
+  "Marketing":{bg:"#FFF0C8",txt:"#5A3E00"},
+  "Finance":{bg:"#D0F0D8",txt:"#003300"},
+  "Sponsors":{bg:"#DDE8EE",txt:"#1C2C35"},
+  "Venue / Decor":{bg:"#C8EDE9",txt:"#003D33"},
+  "Food":{bg:"#FFE4CC",txt:"#7A2400"},
+  "Bar":{bg:"#D0DBF5",txt:"#0A0050"},
+  "Eventbrite":{bg:"#F8D8F0",txt:"#4A0030"},
+  "Pre-Order Package":{bg:"#FFF5CC",txt:"#604200"},
+  "Media":{bg:"#EDE0FF",txt:"#3B0070"},
+  "Door":{bg:"#F8D8D8",txt:"#600000"},
+  "Talent":{bg:"#E0D8F8",txt:"#12005E"},
+  "Hookah":{bg:"#FFF3CD",txt:"#7A3D00"},
+  "Operations":{bg:"#E8E0FF",txt:"#12005E"},
+  "Surveys":{bg:"#D0F8EC",txt:"#003830"},
+};
+function addDays(d,n){let r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function tLabel(t){if(t===null)return"Ongoing";if(t<0)return"T-"+Math.abs(t);if(t===0)return"T-0 (Event Day)";return"Post +"+t+"d";}
+const TASK_DEFS=[
+  ["Teaser Post","teaser","Marketing","Luke","High"],
+  ["Motion Flyer + Ticket Drop","teaser+4","Marketing","Isaac","High"],
+  ["Create Eventbrite listing","teaser+4","Eventbrite","Kevon","High"],
+  ["Create team affiliate links","teaser+4","Eventbrite","Kevon","Medium"],
+  ["Bottle Package Drop Post","teaser+11","Marketing","Isaac","High"],
+  ["Create Pre-Order form & tracker","teaser+10","Pre-Order Package","Dexter","High"],
+  ["Create event budget",-75,"Finance","Dexter","High"],
+  ["Outfit Inspo Post",-66,"Marketing","Isaac / Luke","Medium"],
+  ["Source potential sponsors",-60,"Sponsors","Travis","Medium"],
+  ["Initial sponsor outreach",-60,"Sponsors","Travis","Medium"],
+  ["Source venue",-60,"Venue / Decor","Travis","High"],
+  ["Vendor sourcing & selection",-60,"Food","Theron","High"],
+  ["Forecast total liquor",-60,"Bar","Dexter","Medium"],
+  ["Create Eventbrite order form",-60,"Eventbrite","Dexter","High"],
+  ["Hookah station video walkthrough",-60,"Hookah","Kevon","Low"],
+  ["Select & source DJs (5 per event)",-60,"Talent","Travis","Medium"],
+  ["Build & manage marketing calendar",-75,"Marketing","Travis","High"],
+  ["Develop internal influencer strategy",-45,"Media","Kevon","High"],
+  ["Finalize sponsorship contract",-45,"Sponsors","Travis","Medium"],
+  ["Develop floor plan",-45,"Venue / Decor","Travis","High"],
+  ["Initial venue walkthrough",-45,"Venue / Decor","Travis","High"],
+  ["Menu & experience planning",-45,"Food","Theron","High"],
+  ["Develop bar floor plan",-45,"Bar","Travis","Medium"],
+  ["DJ contract negotiation",-45,"Talent","Travis","Medium"],
+  ["Finalize all flyers & content",-45,"Marketing","Travis","High"],
+  ["Hire photographers & videographers",-30,"Media","Travis","High"],
+  ["Purchase supplies (theme + color)",-30,"Venue / Decor","Tosin","High"],
+  ["Hire bar management team",-30,"Bar","Travis","Medium"],
+  ["Design & finalize custom cups",-30,"Bar","Travis","Medium"],
+  ["Order wristbands",-30,"Door","Travis","Medium"],
+  ["Source hookah staff",-30,"Hookah","Kevon","Low"],
+  ["Finalize DJ lineup (5 confirmed)",-30,"Talent","Travis","High"],
+  ["Hosts Post",-28,"Marketing","Isaac / Luke","Medium"],
+  ["Food Vendors Post",-21,"Marketing","Isaac","High"],
+  ["Hire door staff",-21,"Door","Travis","Low"],
+  ["Work with security on door plan",-21,"Door","Travis","High"],
+  ["Purchase hookah outfits",-21,"Hookah","Kevon","Medium"],
+  ["DJ Lineup Reveal + Spotlight Series",-14,"Marketing","Luke","High"],
+  ["FAQs Post",-14,"Marketing","Isaac","High"],
+  ["Finalize decor plan",-14,"Venue / Decor","Travis","High"],
+  ["Place liquor order",-14,"Bar","Dexter","High"],
+  ["Communication with DJs",-14,"Talent","Travis","Medium"],
+  ["Create day-of ops one pager",-14,"Hookah","Kevon","High"],
+  ["Finalize all venue (comms + payment)",-7,"Venue / Decor","Travis","High"],
+  ["Print shop — signage",-7,"Venue / Decor","Travis","High"],
+  ["Print shop — flyers",-7,"Venue / Decor","Travis","High"],
+  ["Pre-order plan w/ bar managers",-7,"Pre-Order Package","Travis","Medium"],
+  ["Staff meal management",-7,"Food","Theron","Medium"],
+  ["Send tickets to pre-order holders",-4,"Eventbrite","Dexter","High"],
+  ["Export order form responses",-4,"Eventbrite","Dexter","Medium"],
+  ["Consolidate pre-order sheets",-4,"Pre-Order Package","Nigel","Low"],
+  ["Address Release",-3,"Marketing","Isaac","High"],
+  ["Prepare staff payments",-3,"Finance","Dexter","High"],
+  ["Pre-order print-outs & signage",-3,"Bar","Greg","Medium"],
+  ["Ensure liquor transported to venue",-2,"Bar","Dexter","High"],
+  ["Text package holders",-2,"Pre-Order Package","Dexter","High"],
+  ["Email package holders",-2,"Pre-Order Package","Kevon","High"],
+  ["Distribute wristbands to staff",-1,"Door","Staff","High"],
+  ["Pre-order package organizing",-1,"Bar","Greg","High"],
+  ["Doors Open + Event Day Post",0,"Marketing","Isaac / Luke","High"],
+  ["Live Event Content",0,"Marketing","Isaac / Luke","High"],
+  ["Final venue check-in day of",0,"Venue / Decor","Travis","High"],
+  ["Day-of food vendor execution",0,"Food","Theron","High"],
+  ["Liquor count + divide bars",0,"Bar","Greg","High"],
+  ["POS + cash box setup",0,"Hookah","Dexter","High"],
+  ["Day-of hookah prep",0,"Hookah","Kevon","High"],
+  ["Manage door staff day of",0,"Door","Travis","High"],
+  ["Artist/DJ day-of logistics",0,"Talent","Travis","High"],
+  ["Manage day-of influencer ops",0,"Media","Nigel","Medium"],
+  ["Final event finance report",1,"Finance","Dexter","Medium"],
+  ["Post-event food wrap up",1,"Food","Theron","High"],
+  ["Staff payouts",1,"Finance","Dexter","High"],
+  ["Thank You + Recap Post",2,"Marketing","Luke","High"],
+  ["Organize post-event photos",2,"Marketing","Luke","High"],
+  ["Post-event influencer follow-up",2,"Media","Kevon","Low"],
+  ["Build & send patron survey",2,"Surveys","Kevon / Greg","Medium"],
+];
+
+function parseBool(value, fallback=true){
+  if(value===undefined||value===null||value==='') return fallback;
+  const v=String(value).trim().toLowerCase();
+  if(["false","0","no","n","off"].includes(v)) return false;
+  if(["true","1","yes","y","on"].includes(v)) return true;
+  return fallback;
+}
+function parseDateString(value){
+  if(!value) return null;
+  const parts=String(value).trim().split('-').map(Number);
+  if(parts.length!==3 || parts.some(Number.isNaN)) return null;
+  return new Date(parts[0], parts[1]-1, parts[2]);
+}
+function parseNumber(value, fallback){
+  const n=Number(value);
+  return Number.isFinite(n)?n:fallback;
+}
+function normalizeType(value){
+  return String(value||'').trim().toLowerCase();
+}
+function isTaskRow(row){
+  const t=normalizeType(row["TYPE"]);
+  return t==="task" || t==="task override" || t==="taskoverride" || t==="override";
+}
+function isEventRow(row){
+  const t=normalizeType(row["TYPE"]);
+  return !t || t==="event";
+}
+function getEventStyle(name){
+  const defaults={
+    "EMC Brunch":{color:"#C9A84C",light:"#FFF8E7",emoji:"🥂"},
+    "Paradise":{color:"#1E88E5",light:"#E3F2FD",emoji:"🏝️"},
+    "Halloween":{color:"#E65100",light:"#FFF3E0",emoji:"🎃"},
+    "Holiday Party":{color:"#2D6A4F",light:"#E8F5E9",emoji:"🎄"},
+  };
+  return defaults[name] || {color:"#6C63FF",light:"#F0EEFF",emoji:"🎉"};
+}
+function buildEventFromRow(row){
+  const name=(row["EVENT NAME"]||"").trim();
+  if(!name) return null;
+  const base=DEFAULT_EVENTS[name] || getEventStyle(name);
+  const parsedDate=parseDateString(row["DATE"]);
+  return {
+    date: parsedDate || base.date || null,
+    color: row["COLOR"] || base.color,
+    light: row["LIGHT"] || base.light,
+    emoji: row["EMOJI"] || base.emoji,
+    teaser: parseNumber(row["TEASER DAYS"], base.teaser ?? -28),
+    active: parseBool(row["ACTIVE"], true),
+  };
+}
+function buildTaskOverrideFromRow(row){
+  const eventName=(row["EVENT NAME"]||"").trim();
+  const taskName=(row["TASK NAME"]||row["NAME"]||"").trim();
+  if(!eventName || !taskName) return null;
+  return {
+    event:eventName,
+    name:taskName,
+    active:parseBool(row["ACTIVE"], true),
+    date:parseDateString(row["TASK DATE"]),
+    offset:parseNumber(row["OFFSET DAYS"], null),
+    cat:(row["CATEGORY"]||"").trim(),
+    owner:(row["OWNER"]||"").trim(),
+    prio:(row["PRIORITY"]||"").trim(),
+  };
+}
+async function loadEventsFromSheet(){
+  const response=await fetch(SHEET_URL);
+  if(!response.ok) throw new Error('Could not load Google Sheet');
+  const rows=await response.json();
+  const merged={...DEFAULT_EVENTS};
+  const overrides=[];
+
+  rows.forEach(row=>{
+    if(isTaskRow(row)){
+      const taskOverride=buildTaskOverrideFromRow(row);
+      if(taskOverride) overrides.push(taskOverride);
+      return;
+    }
+
+    if(!isEventRow(row)) return;
+
+    const name=(row["EVENT NAME"]||"").trim();
+    if(!name) return;
+    const eventData=buildEventFromRow(row);
+    if(!eventData) return;
+    if(eventData.active===false){
+      delete merged[name];
+      return;
+    }
+    if(!eventData.date) return;
+    merged[name]=eventData;
+  });
+
+  EVENTS=merged;
+  TASK_OVERRIDES=overrides;
+}
+function getTasksForEvent(evName,evData){
+  const ed=evData.date,to=evData.teaser,tk=to+4,tasks=[];
+  TASK_DEFS.forEach(([name,tRaw,cat,owner,prio])=>{
+    let offset;
+    if(tRaw==="teaser")offset=to;
+    else if(tRaw==="teaser+4")offset=tk;
+    else if(tRaw==="teaser+11")offset=tk+7;
+    else if(tRaw==="teaser+10")offset=tk+6;
+    else offset=tRaw;
+    tasks.push({name,date:addDays(ed,offset),t:offset,cat,owner,prio,event:evName,evColor:evData.color,evLight:evData.light,evEmoji:evData.emoji});
+  });
+  if(evName==="EMC Brunch")tasks.push({name:"Mimosa station setup",date:ed,t:0,cat:"Bar",owner:"Greg",prio:"Medium",event:evName,evColor:evData.color,evLight:evData.light,evEmoji:evData.emoji});
+  return tasks;
+}
+function applyTaskOverrides(tasks){
+  TASK_OVERRIDES.forEach(override=>{
+    if(!EVENTS[override.event]) return;
+
+    const idx=tasks.findIndex(t=>t.event===override.event && t.name===override.name);
+
+    if(override.active===false){
+      if(idx!==-1) tasks.splice(idx,1);
+      return;
+    }
+
+    const eventData=EVENTS[override.event];
+    const resolvedDate=override.date || (override.offset!==null ? addDays(eventData.date, override.offset) : null);
+
+    if(idx!==-1){
+      if(resolvedDate) tasks[idx].date=resolvedDate;
+      if(override.offset!==null) tasks[idx].t=override.offset;
+      if(override.cat) tasks[idx].cat=override.cat;
+      if(override.owner) tasks[idx].owner=override.owner;
+      if(override.prio) tasks[idx].prio=override.prio;
+      return;
+    }
+
+    if(!resolvedDate) return;
+    tasks.push({
+      name:override.name,
+      date:resolvedDate,
+      t:override.offset!==null ? override.offset : null,
+      cat:override.cat || "Operations",
+      owner:override.owner || "",
+      prio:override.prio || "Medium",
+      event:override.event,
+      evColor:eventData.color,
+      evLight:eventData.light,
+      evEmoji:eventData.emoji
+    });
+  });
+
+  return tasks;
+}
+function rebuildAllTasks(){
+  ALL_TASKS=[];
+  Object.entries(EVENTS).forEach(([name,data])=>ALL_TASKS.push(...getTasksForEvent(name,data)));
+  applyTaskOverrides(ALL_TASKS);
+}
+function tasksByDate(){
+  const map={};
+  ALL_TASKS.forEach(t=>{
+    const k=t.date.getFullYear()+"-"+t.date.getMonth()+"-"+t.date.getDate();
+    if(!map[k])map[k]=[];
+    map[k].push(t);
+  });
+  return map;
+}
+function rebuildTaskMap(){
+  TASK_MAP=tasksByDate();
+}
+function getKey(d){return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
+let curYear=2026,curMonth=2,activeFilter="All";
+function rebuildFilters(){
+  FILTERS=["All"];
+  FC={"All":{bg:"#F0F0F0",txt:"#333",br:"#CCC"}};
+  Object.entries(EVENTS).forEach(([name,data])=>{
+    FILTERS.push(name);
+    FC[name]={bg:data.light||"#F0EEFF",txt:data.color||"#6C63FF",br:data.color||"#6C63FF"};
+  });
+}
+function buildFilters(){
+  const row=document.getElementById('filter-row');row.innerHTML='';
+  FILTERS.forEach(f=>{
+    const c=FC[f];
+    const btn=document.createElement('button');
+    btn.className='filter-btn';
+    btn.textContent=f==='All'?'All events':f;
+    const isActive=f===activeFilter;
+    btn.style.background=isActive?c.bg:'#F5F5F5';
+    btn.style.color=isActive?c.txt:'#777';
+    btn.style.borderColor=isActive?c.br:'#DDD';
+    btn.style.opacity=isActive?'1':'0.75';
+    btn.onclick=()=>{activeFilter=f;buildFilters();renderCal();};
+    row.appendChild(btn);
+  });
+}
+function buildLegend(){
+  const row=document.getElementById('legend-row');row.innerHTML='<span style="font-size:11px;font-weight:600;color:#999;margin-right:4px">DEPARTMENTS:</span>';
+  ["Marketing","Finance","Venue / Decor","Food","Bar","Eventbrite","Pre-Order Package","Media","Door","Talent","Hookah","Sponsors"].forEach(cat=>{
+    const c=CAT[cat]||{bg:"#eee",txt:"#333"};
+    row.innerHTML+=`<div class="legend-item"><div class="legend-dot" style="background:${c.bg};border:1.5px solid ${c.txt}60"></div><span>${cat}</span></div>`;
+  });
+}
+function filterTasks(tasks){return activeFilter==='All'?tasks:tasks.filter(t=>t.event===activeFilter);}
+function renderCal(){
+  const grid=document.getElementById('cal-grid');
+  const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById('month-label').textContent=MONTHS[curMonth]+" "+curYear;
+  grid.innerHTML='';
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{grid.innerHTML+=`<div class="dow-hdr">${d}</div>`;});
+  const first=new Date(curYear,curMonth,1),startDow=first.getDay(),daysInMonth=new Date(curYear,curMonth+1,0).getDate();
+  const total=Math.ceil((startDow+daysInMonth)/7)*7;
+  for(let i=0;i<total;i++){
+    const d=new Date(curYear,curMonth,1+(i-startDow));
+    const isThisMonth=d.getMonth()===curMonth,isToday=sameDay(d,TODAY);
+    const tasks=filterTasks(TASK_MAP[getKey(d)]||[]);
+    const cell=document.createElement('div');
+    cell.className='day-cell'+(isThisMonth?'':" other-month")+(isToday?' today':'')+(tasks.length>0?' has-event':'');
+    if(isThisMonth) cell.onclick=()=>openPanel(d,tasks);
+    const numDiv=document.createElement('div');numDiv.className='day-num';
+    if(isToday){numDiv.innerHTML=`<div class="today-dot">${d.getDate()}</div>`;}
+    else{numDiv.innerHTML=`<span>${d.getDate()}</span>`;}
+    Object.entries(EVENTS).forEach(([name,ev])=>{
+      if(sameDay(ev.date,d)&&(activeFilter==='All'||activeFilter===name)){
+        const b=document.createElement('span');b.style.fontSize='14px';b.textContent=ev.emoji;numDiv.appendChild(b);
+      }
+    });
+    cell.appendChild(numDiv);
+    tasks.slice(0,3).forEach(t=>{
+      const c=CAT[t.cat]||{bg:"#eee",txt:"#333"};
+      const pill=document.createElement('div');pill.className='task-pill';
+      pill.style.cssText=`background:${c.bg};color:${c.txt}`;
+      pill.title=t.name;pill.textContent=t.name;cell.appendChild(pill);
+    });
+    if(tasks.length>3){const m=document.createElement('div');m.className='more-badge';m.textContent=`+${tasks.length-3} more`;cell.appendChild(m);}
+    grid.appendChild(cell);
+  }
+}
+function openPanel(d,tasks){
+  const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const daysAway=Math.round((d-TODAY)/(864e5));
+  document.getElementById('panel-date').textContent=DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear();
+  document.getElementById('panel-sub').textContent=daysAway===0?'Today':daysAway>0?daysAway+" days from today":Math.abs(daysAway)+" days ago";
+  const body=document.getElementById('panel-body');body.innerHTML='';
+  if(tasks.length>0){
+    const evs=[...new Set(tasks.map(t=>t.event))];
+    body.innerHTML=`<div class="stats-row"><div class="stat-box"><div class="stat-num">${tasks.length}</div><div class="stat-lbl">tasks</div></div><div class="stat-box"><div class="stat-num">${evs.length}</div><div class="stat-lbl">events</div></div><div class="stat-box"><div class="stat-num">${tasks.filter(t=>t.prio==='High').length}</div><div class="stat-lbl">high priority</div></div></div>`;
+    const groups={};tasks.forEach(t=>{if(!groups[t.event])groups[t.event]=[];groups[t.event].push(t);});
+    Object.entries(groups).forEach(([evName,evTasks])=>{
+      const ev=EVENTS[evName];
+      body.innerHTML+=`<div class="event-banner" style="background:${ev.light};color:${ev.color}">${ev.emoji} ${evName}</div>`;
+      evTasks.forEach(t=>{
+        const c=CAT[t.cat]||{bg:"#eee",txt:"#333"};
+        const pb={High:"#FFCCCC",Medium:"#FFF3CD",Low:"#D4EDDA"}[t.prio]||"#eee";
+        const pt={High:"#7A0000",Medium:"#7A4A00",Low:"#155724"}[t.prio]||"#333";
+        body.innerHTML+=`<div class="task-row"><div class="task-cat-dot" style="background:${c.bg};border:1.5px solid ${c.txt}60"></div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-meta">${t.cat} &nbsp;·&nbsp; ${t.owner} &nbsp;·&nbsp; ${tLabel(t.t)}</div><span class="task-badge" style="background:${pb};color:${pt}">${t.prio}</span></div></div>`;
+      });
+    });
+  } else {
+    body.innerHTML=`<div class="empty-msg">No tasks scheduled for this day.</div>`;
+  }
+  document.getElementById('overlay').classList.add('open');
+}
+function closePanel(){document.getElementById('overlay').classList.remove('open');}
+function closePanelOutside(e){if(e.target.id==='overlay')closePanel();}
+function changeMonth(dir){curMonth+=dir;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}renderCal();}
+
+async function initializeCalendar(){
+  try{
+    await loadEventsFromSheet();
+  }catch(err){
+    console.error('Sheet load failed. Using defaults.', err);
+    EVENTS={...DEFAULT_EVENTS};
+  }
+  rebuildAllTasks();
+  rebuildTaskMap();
+  rebuildFilters();
+  buildFilters();
+  buildLegend();
+  renderCal();
+}
+
+initializeCalendar();
+</script>
+</body>
+</html>
