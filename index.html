@@ -265,24 +265,21 @@ function buildTaskOverrideFromRow(row){
     cat:(row["CATEGORY"]||"").trim(),
     owner:(row["OWNER"]||"").trim(),
     prio:(row["PRIORITY"]||"").trim(),
-  };
+};
 }
 async function loadEventsFromSheet(){
-  const response=await fetch(SHEET_URL);
+  const response = await fetch("https://script.google.com/macros/s/AKfycbxESDJv5ymB-WVvcCOhT9ErSGIE6mid4Jywkhf511dV9Vqu5yaD-O4YI6IprVIimFAkcA/exec");
   if(!response.ok) throw new Error('Could not load Google Sheet');
-  const rows=await response.json();
-  const merged={...DEFAULT_EVENTS};
-  const overrides=[];
-
+  const rows = await response.json();
+  const merged = {...DEFAULT_EVENTS};
+  const overrides = [];
   rows.forEach(row=>{
     if(isTaskRow(row)){
-      const taskOverride=buildTaskOverrideFromRow(row);
+      const taskOverride = buildTaskOverrideFromRow(row);
       if(taskOverride) overrides.push(taskOverride);
       return;
     }
-
     if(!isEventRow(row)) return;
-
     const name=(row["EVENT NAME"]||"").trim();
     if(!name) return;
     const eventData=buildEventFromRow(row);
