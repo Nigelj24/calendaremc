@@ -87,7 +87,7 @@ h1{font-size:20px;font-weight:600;color:#1A1A2E;margin-bottom:4px}
 
 <script>
 const TODAY=new Date(2026,2,22);
-const SHEET_URL="https://script.google.com/macros/s/AKfycbzccpHQV6ioHrDWMqQc3n8lKYexgkYU7oWQMIh55VS9FbqRGDDwVNXhq2ljJeYBwaGU7Q/exec";
+const SHEET_URL="https://script.google.com/macros/s/AKfycbxESDJv5ymB-WVvcCOhT9ErSGIE6mid4Jywkhf511dV9Vqu5yaD-O4YI6IprVIimFAkcA/exec";
 
 const DEFAULT_EVENTS={
   "EMC Brunch":   {date:new Date(2026,5,27),color:"#C9A84C",light:"#FFF8E7",emoji:"🥂",teaser:-87,active:true},
@@ -119,9 +119,11 @@ const CAT={
   "Operations":{bg:"#E8E0FF",txt:"#12005E"},
   "Surveys":{bg:"#D0F8EC",txt:"#003830"},
 };
+
 function addDays(d,n){let r=new Date(d);r.setDate(r.getDate()+n);return r;}
 function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function tLabel(t){if(t===null)return"Ongoing";if(t<0)return"T-"+Math.abs(t);if(t===0)return"T-0 (Event Day)";return"Post +"+t+"d";}
+
 const TASK_DEFS=[
   ["Teaser Post","teaser","Marketing","Luke","High"],
   ["Motion Flyer + Ticket Drop","teaser+4","Marketing","Isaac","High"],
@@ -208,27 +210,33 @@ function parseBool(value, fallback=true){
   if(["true","1","yes","y","on"].includes(v)) return true;
   return fallback;
 }
+
 function parseDateString(value){
   if(!value) return null;
   const parts=String(value).trim().split('-').map(Number);
   if(parts.length!==3 || parts.some(Number.isNaN)) return null;
   return new Date(parts[0], parts[1]-1, parts[2]);
 }
+
 function parseNumber(value, fallback){
   const n=Number(value);
   return Number.isFinite(n)?n:fallback;
 }
+
 function normalizeType(value){
   return String(value||'').trim().toLowerCase();
 }
+
 function isTaskRow(row){
   const t=normalizeType(row["TYPE"]);
   return t==="task" || t==="task override" || t==="taskoverride" || t==="override";
 }
+
 function isEventRow(row){
   const t=normalizeType(row["TYPE"]);
   return !t || t==="event";
 }
+
 function getEventStyle(name){
   const defaults={
     "EMC Brunch":{color:"#C9A84C",light:"#FFF8E7",emoji:"🥂"},
@@ -238,6 +246,7 @@ function getEventStyle(name){
   };
   return defaults[name] || {color:"#6C63FF",light:"#F0EEFF",emoji:"🎉"};
 }
+
 function buildEventFromRow(row){
   const name=(row["EVENT NAME"]||"").trim();
   if(!name) return null;
@@ -252,6 +261,7 @@ function buildEventFromRow(row){
     active: parseBool(row["ACTIVE"], true),
   };
 }
+
 function buildTaskOverrideFromRow(row){
   const eventName=(row["EVENT NAME"]||"").trim();
   const taskName=(row["TASK NAME"]||row["NAME"]||"").trim();
@@ -265,29 +275,37 @@ function buildTaskOverrideFromRow(row){
     cat:(row["CATEGORY"]||"").trim(),
     owner:(row["OWNER"]||"").trim(),
     prio:(row["PRIORITY"]||"").trim(),
-};
+  };
 }
+
 async function loadEventsFromSheet(){
-  const response = await fetch("https://script.google.com/macros/s/AKfycbxESDJv5ymB-WVvcCOhT9ErSGIE6mid4Jywkhf511dV9Vqu5yaD-O4YI6IprVIimFAkcA/exec");
+  const response = await fetch(SHEET_URL);
   if(!response.ok) throw new Error('Could not load Google Sheet');
+
   const rows = await response.json();
   const merged = {...DEFAULT_EVENTS};
   const overrides = [];
+
   rows.forEach(row=>{
     if(isTaskRow(row)){
       const taskOverride = buildTaskOverrideFromRow(row);
       if(taskOverride) overrides.push(taskOverride);
       return;
     }
+
     if(!isEventRow(row)) return;
+
     const name=(row["EVENT NAME"]||"").trim();
     if(!name) return;
+
     const eventData=buildEventFromRow(row);
     if(!eventData) return;
+
     if(eventData.active===false){
       delete merged[name];
       return;
     }
+
     if(!eventData.date) return;
     merged[name]=eventData;
   });
@@ -295,6 +313,7 @@ async function loadEventsFromSheet(){
   EVENTS=merged;
   TASK_OVERRIDES=overrides;
 }
+
 function getTasksForEvent(evName,evData){
   const ed=evData.date,to=evData.teaser,tk=to+4,tasks=[];
   TASK_DEFS.forEach(([name,tRaw,cat,owner,prio])=>{
@@ -304,11 +323,39 @@ function getTasksForEvent(evName,evData){
     else if(tRaw==="teaser+11")offset=tk+7;
     else if(tRaw==="teaser+10")offset=tk+6;
     else offset=tRaw;
-    tasks.push({name,date:addDays(ed,offset),t:offset,cat,owner,prio,event:evName,evColor:evData.color,evLight:evData.light,evEmoji:evData.emoji});
+
+    tasks.push({
+      name,
+      date:addDays(ed,offset),
+      t:offset,
+      cat,
+      owner,
+      prio,
+      event:evName,
+      evColor:evData.color,
+      evLight:evData.light,
+      evEmoji:evData.emoji
+    });
   });
-  if(evName==="EMC Brunch")tasks.push({name:"Mimosa station setup",date:ed,t:0,cat:"Bar",owner:"Greg",prio:"Medium",event:evName,evColor:evData.color,evLight:evData.light,evEmoji:evData.emoji});
+
+  if(evName==="EMC Brunch"){
+    tasks.push({
+      name:"Mimosa station setup",
+      date:ed,
+      t:0,
+      cat:"Bar",
+      owner:"Greg",
+      prio:"Medium",
+      event:evName,
+      evColor:evData.color,
+      evLight:evData.light,
+      evEmoji:evData.emoji
+    });
+  }
+
   return tasks;
 }
+
 function applyTaskOverrides(tasks){
   TASK_OVERRIDES.forEach(override=>{
     if(!EVENTS[override.event]) return;
@@ -333,6 +380,7 @@ function applyTaskOverrides(tasks){
     }
 
     if(!resolvedDate) return;
+
     tasks.push({
       name:override.name,
       date:resolvedDate,
@@ -349,117 +397,183 @@ function applyTaskOverrides(tasks){
 
   return tasks;
 }
+
 function rebuildAllTasks(){
   ALL_TASKS=[];
   Object.entries(EVENTS).forEach(([name,data])=>ALL_TASKS.push(...getTasksForEvent(name,data)));
   applyTaskOverrides(ALL_TASKS);
 }
+
 function tasksByDate(){
   const map={};
   ALL_TASKS.forEach(t=>{
     const k=t.date.getFullYear()+"-"+t.date.getMonth()+"-"+t.date.getDate();
-    if(!map[k])map[k]=[];
+    if(!map[k]) map[k]=[];
     map[k].push(t);
   });
   return map;
 }
+
 function rebuildTaskMap(){
   TASK_MAP=tasksByDate();
 }
+
 function getKey(d){return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
 let curYear=2026,curMonth=2,activeFilter="All";
+
 function rebuildFilters(){
   FILTERS=["All"];
   FC={"All":{bg:"#F0F0F0",txt:"#333",br:"#CCC"}};
+
   Object.entries(EVENTS).forEach(([name,data])=>{
     FILTERS.push(name);
     FC[name]={bg:data.light||"#F0EEFF",txt:data.color||"#6C63FF",br:data.color||"#6C63FF"};
   });
 }
+
 function buildFilters(){
-  const row=document.getElementById('filter-row');row.innerHTML='';
+  const row=document.getElementById('filter-row');
+  row.innerHTML='';
+
   FILTERS.forEach(f=>{
     const c=FC[f];
     const btn=document.createElement('button');
     btn.className='filter-btn';
     btn.textContent=f==='All'?'All events':f;
+
     const isActive=f===activeFilter;
     btn.style.background=isActive?c.bg:'#F5F5F5';
     btn.style.color=isActive?c.txt:'#777';
     btn.style.borderColor=isActive?c.br:'#DDD';
     btn.style.opacity=isActive?'1':'0.75';
     btn.onclick=()=>{activeFilter=f;buildFilters();renderCal();};
+
     row.appendChild(btn);
   });
 }
+
 function buildLegend(){
-  const row=document.getElementById('legend-row');row.innerHTML='<span style="font-size:11px;font-weight:600;color:#999;margin-right:4px">DEPARTMENTS:</span>';
+  const row=document.getElementById('legend-row');
+  row.innerHTML='<span style="font-size:11px;font-weight:600;color:#999;margin-right:4px">DEPARTMENTS:</span>';
+
   ["Marketing","Finance","Venue / Decor","Food","Bar","Eventbrite","Pre-Order Package","Media","Door","Talent","Hookah","Sponsors"].forEach(cat=>{
     const c=CAT[cat]||{bg:"#eee",txt:"#333"};
     row.innerHTML+=`<div class="legend-item"><div class="legend-dot" style="background:${c.bg};border:1.5px solid ${c.txt}60"></div><span>${cat}</span></div>`;
   });
 }
-function filterTasks(tasks){return activeFilter==='All'?tasks:tasks.filter(t=>t.event===activeFilter);}
+
+function filterTasks(tasks){
+  return activeFilter==='All'?tasks:tasks.filter(t=>t.event===activeFilter);
+}
+
 function renderCal(){
   const grid=document.getElementById('cal-grid');
   const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
   document.getElementById('month-label').textContent=MONTHS[curMonth]+" "+curYear;
   grid.innerHTML='';
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{grid.innerHTML+=`<div class="dow-hdr">${d}</div>`;});
-  const first=new Date(curYear,curMonth,1),startDow=first.getDay(),daysInMonth=new Date(curYear,curMonth+1,0).getDate();
+
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
+    grid.innerHTML+=`<div class="dow-hdr">${d}</div>`;
+  });
+
+  const first=new Date(curYear,curMonth,1),
+        startDow=first.getDay(),
+        daysInMonth=new Date(curYear,curMonth+1,0).getDate();
   const total=Math.ceil((startDow+daysInMonth)/7)*7;
+
   for(let i=0;i<total;i++){
     const d=new Date(curYear,curMonth,1+(i-startDow));
-    const isThisMonth=d.getMonth()===curMonth,isToday=sameDay(d,TODAY);
+    const isThisMonth=d.getMonth()===curMonth,
+          isToday=sameDay(d,TODAY);
     const tasks=filterTasks(TASK_MAP[getKey(d)]||[]);
+
     const cell=document.createElement('div');
     cell.className='day-cell'+(isThisMonth?'':" other-month")+(isToday?' today':'')+(tasks.length>0?' has-event':'');
     if(isThisMonth) cell.onclick=()=>openPanel(d,tasks);
-    const numDiv=document.createElement('div');numDiv.className='day-num';
-    if(isToday){numDiv.innerHTML=`<div class="today-dot">${d.getDate()}</div>`;}
-    else{numDiv.innerHTML=`<span>${d.getDate()}</span>`;}
+
+    const numDiv=document.createElement('div');
+    numDiv.className='day-num';
+
+    if(isToday){
+      numDiv.innerHTML=`<div class="today-dot">${d.getDate()}</div>`;
+    }else{
+      numDiv.innerHTML=`<span>${d.getDate()}</span>`;
+    }
+
     Object.entries(EVENTS).forEach(([name,ev])=>{
       if(sameDay(ev.date,d)&&(activeFilter==='All'||activeFilter===name)){
-        const b=document.createElement('span');b.style.fontSize='14px';b.textContent=ev.emoji;numDiv.appendChild(b);
+        const b=document.createElement('span');
+        b.style.fontSize='14px';
+        b.textContent=ev.emoji;
+        numDiv.appendChild(b);
       }
     });
+
     cell.appendChild(numDiv);
+
     tasks.slice(0,3).forEach(t=>{
       const c=CAT[t.cat]||{bg:"#eee",txt:"#333"};
-      const pill=document.createElement('div');pill.className='task-pill';
+      const pill=document.createElement('div');
+      pill.className='task-pill';
       pill.style.cssText=`background:${c.bg};color:${c.txt}`;
-      pill.title=t.name;pill.textContent=t.name;cell.appendChild(pill);
+      pill.title=t.name;
+      pill.textContent=t.name;
+      cell.appendChild(pill);
     });
-    if(tasks.length>3){const m=document.createElement('div');m.className='more-badge';m.textContent=`+${tasks.length-3} more`;cell.appendChild(m);}
+
+    if(tasks.length>3){
+      const m=document.createElement('div');
+      m.className='more-badge';
+      m.textContent=`+${tasks.length-3} more`;
+      cell.appendChild(m);
+    }
+
     grid.appendChild(cell);
   }
 }
+
 function openPanel(d,tasks){
   const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
   const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const daysAway=Math.round((d-TODAY)/(864e5));
+
   document.getElementById('panel-date').textContent=DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear();
   document.getElementById('panel-sub').textContent=daysAway===0?'Today':daysAway>0?daysAway+" days from today":Math.abs(daysAway)+" days ago";
-  const body=document.getElementById('panel-body');body.innerHTML='';
+
+  const body=document.getElementById('panel-body');
+  body.innerHTML='';
+
   if(tasks.length>0){
     const evs=[...new Set(tasks.map(t=>t.event))];
+
     body.innerHTML=`<div class="stats-row"><div class="stat-box"><div class="stat-num">${tasks.length}</div><div class="stat-lbl">tasks</div></div><div class="stat-box"><div class="stat-num">${evs.length}</div><div class="stat-lbl">events</div></div><div class="stat-box"><div class="stat-num">${tasks.filter(t=>t.prio==='High').length}</div><div class="stat-lbl">high priority</div></div></div>`;
-    const groups={};tasks.forEach(t=>{if(!groups[t.event])groups[t.event]=[];groups[t.event].push(t);});
+
+    const groups={};
+    tasks.forEach(t=>{
+      if(!groups[t.event]) groups[t.event]=[];
+      groups[t.event].push(t);
+    });
+
     Object.entries(groups).forEach(([evName,evTasks])=>{
       const ev=EVENTS[evName];
       body.innerHTML+=`<div class="event-banner" style="background:${ev.light};color:${ev.color}">${ev.emoji} ${evName}</div>`;
+
       evTasks.forEach(t=>{
         const c=CAT[t.cat]||{bg:"#eee",txt:"#333"};
         const pb={High:"#FFCCCC",Medium:"#FFF3CD",Low:"#D4EDDA"}[t.prio]||"#eee";
         const pt={High:"#7A0000",Medium:"#7A4A00",Low:"#155724"}[t.prio]||"#333";
+
         body.innerHTML+=`<div class="task-row"><div class="task-cat-dot" style="background:${c.bg};border:1.5px solid ${c.txt}60"></div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-meta">${t.cat} &nbsp;·&nbsp; ${t.owner} &nbsp;·&nbsp; ${tLabel(t.t)}</div><span class="task-badge" style="background:${pb};color:${pt}">${t.prio}</span></div></div>`;
       });
     });
   } else {
     body.innerHTML=`<div class="empty-msg">No tasks scheduled for this day.</div>`;
   }
+
   document.getElementById('overlay').classList.add('open');
 }
+
 function closePanel(){document.getElementById('overlay').classList.remove('open');}
 function closePanelOutside(e){if(e.target.id==='overlay')closePanel();}
 function changeMonth(dir){curMonth+=dir;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}renderCal();}
@@ -470,7 +584,9 @@ async function initializeCalendar(){
   }catch(err){
     console.error('Sheet load failed. Using defaults.', err);
     EVENTS={...DEFAULT_EVENTS};
+    TASK_OVERRIDES=[];
   }
+
   rebuildAllTasks();
   rebuildTaskMap();
   rebuildFilters();
