@@ -104,20 +104,26 @@ let FILTERS=["All"];
 let FC={"All":{bg:"#F0F0F0",txt:"#333",br:"#CCC"}};
 
 const CAT={
-  "Marketing":{bg:"#FFF0C8",txt:"#5A3E00"},
-  "Finance":{bg:"#D0F0D8",txt:"#003300"},
-  "Sponsors":{bg:"#DDE8EE",txt:"#1C2C35"},
-  "Venue / Decor":{bg:"#C8EDE9",txt:"#003D33"},
-  "Food":{bg:"#FFE4CC",txt:"#7A2400"},
-  "Bar":{bg:"#D0DBF5",txt:"#0A0050"},
-  "Eventbrite":{bg:"#F8D8F0",txt:"#4A0030"},
-  "Pre-Order Package":{bg:"#FFF5CC",txt:"#604200"},
-  "Media":{bg:"#EDE0FF",txt:"#3B0070"},
-  "Door":{bg:"#F8D8D8",txt:"#600000"},
-  "Talent":{bg:"#E0D8F8",txt:"#12005E"},
-  "Hookah":{bg:"#FFF3CD",txt:"#7A3D00"},
-  "Operations":{bg:"#E8E0FF",txt:"#12005E"},
-  "Surveys":{bg:"#D0F8EC",txt:"#003830"},
+  "Marketing":{bg:"#FFD600",txt:"#000000"},          // bright yellow
+  "Finance":{bg:"#00C853",txt:"#FFFFFF"},            // vivid green
+  "Sponsors":{bg:"#2962FF",txt:"#FFFFFF"},           // strong blue
+  "Partnerships":{bg:"#AA00FF",txt:"#FFFFFF"},       // purple
+  "Venue / Decor":{bg:"#00BFA5",txt:"#00332F"},      // teal
+  "Guest Experience":{bg:"#FF6D00",txt:"#FFFFFF"},   // deep orange
+  "Food":{bg:"#FF9100",txt:"#000000"},               // orange
+  "Bar":{bg:"#304FFE",txt:"#FFFFFF"},                // indigo
+  "Inventory":{bg:"#7C4DFF",txt:"#FFFFFF"},          // violet
+  "Logistics":{bg:"#00E5FF",txt:"#00363A"},          // cyan
+  "Eventbrite":{bg:"#FF4081",txt:"#FFFFFF"},         // pink
+  "Communications":{bg:"#AEEA00",txt:"#1B5E20"},     // lime
+  "Pre-Order Package":{bg:"#FFEA00",txt:"#000000"},  // bright yellow alt
+  "Media":{bg:"#651FFF",txt:"#FFFFFF"},              // deep purple
+  "Door":{bg:"#D50000",txt:"#FFFFFF"},               // red
+  "Staffing":{bg:"#795548",txt:"#FFFFFF"},           // brown
+  "Talent":{bg:"#3D5AFE",txt:"#FFFFFF"},             // royal blue
+  "Hookah":{bg:"#6D4C41",txt:"#FFFFFF"},             // dark brown
+  "Operations":{bg:"#607D8B",txt:"#FFFFFF"},         // slate gray
+  "Surveys":{bg:"#00B8D4",txt:"#00363A"},            // aqua
 };
 
 function addDays(d,n){let r=new Date(d);r.setDate(r.getDate()+n);return r;}
@@ -456,7 +462,7 @@ function buildLegend(){
   const row=document.getElementById('legend-row');
   row.innerHTML='<span style="font-size:11px;font-weight:600;color:#999;margin-right:4px">DEPARTMENTS:</span>';
 
-  ["Marketing","Finance","Venue / Decor","Food","Bar","Eventbrite","Pre-Order Package","Media","Door","Talent","Hookah","Sponsors"].forEach(cat=>{
+  ["Marketing","Finance","Sponsors","Partnerships","Venue / Decor","Guest Experience","Food","Bar","Inventory","Logistics","Eventbrite","Communications","Pre-Order Package","Media","Door","Staffing","Talent","Hookah","Operations","Surveys"].forEach(cat=>{
     const c=CAT[cat]||{bg:"#eee",txt:"#333"};
     row.innerHTML+=`<div class="legend-item"><div class="legend-dot" style="background:${c.bg};border:1.5px solid ${c.txt}60"></div><span>${cat}</span></div>`;
   });
